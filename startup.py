@@ -12,6 +12,7 @@ import os
 import sys
 import shutil
 import hashlib
+import six
 import socket
 from distutils.version import LooseVersion
 
@@ -44,7 +45,7 @@ def to_new_version_system(version):
     https://docs.substance3d.com/spdoc/version-2020-1-6-1-0-194216357.html
 
     The way we support this new version system is to use LooseVersion for
-    version comparisons. We modify the major version if the version is higher 
+    version comparisons. We modify the major version if the version is higher
     than 2017.1.0 for the version to become in the style of 6.1, by literally
     subtracting 2014 to the major version component.
     This leaves us always with a predictable version system:
@@ -58,9 +59,9 @@ def to_new_version_system(version):
     according to:
     https://docs.substance3d.com/spdoc/all-changes-188973073.html
 
-    Note that this change means that the LooseVersion is good for comparisons 
-    but NEVER for printing, it would simply print the same version as 
-    LooseVersion does not support rebuilding of the version string from it's 
+    Note that this change means that the LooseVersion is good for comparisons
+    but NEVER for printing, it would simply print the same version as
+    LooseVersion does not support rebuilding of the version string from it's
     components
     """
 
@@ -214,7 +215,7 @@ class SubstancePainterLauncher(SoftwareLauncher):
 
     EXECUTABLE_TEMPLATES = {
         "darwin": ["/Applications/Allegorithmic/Substance Painter.app"],
-        "win32": ["C:/Program Files/Allegorithmic/Substance Painter/Substance Painter.exe"],
+        "win32": ["C:/Program Files/Adobe/Adobe Substance 3D Painter/Adobe Substance 3D Painter.exe"],
         "linux2": [
             "/usr/Allegorithmic/Substance Painter",
             "/usr/Allegorithmic/Substance_Painter/Substance Painter",
@@ -275,7 +276,10 @@ class SubstancePainterLauncher(SoftwareLauncher):
         # Only the startup script, the location of python and potentially the file to open
         # are needed.
         args = ""
-        args = ["%s=%s" % (k, v) for k, v in required_env.iteritems()]
+        if six.PY2:
+            args = ["%s=%s" % (k, v) for k, v in required_env.iteritems()]
+        else:
+            args = ["%s=%s" % (k, v) for k, v in required_env.items()]
         args = '"&%s"' % "&".join(args)
         logger.info("running %s" % args)
 
@@ -297,7 +301,7 @@ class SubstancePainterLauncher(SoftwareLauncher):
                 None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, path_buffer
             )
 
-            user_scripts_path = path_buffer.value + r"\Allegorithmic\Substance Painter\plugins"
+            user_scripts_path = path_buffer.value + r"\Adobe\Adobe Substance 3D Painter\plugins"
 
         else:
             user_scripts_path = os.path.expanduser(
@@ -338,8 +342,8 @@ class SubstancePainterLauncher(SoftwareLauncher):
         method.
 
         To check if the version is supported:
-        
-        First we make an exception for cases were we cannot retrieve the 
+
+        First we make an exception for cases were we cannot retrieve the
         version number, we accept the software as valid.
 
         Second, checks against the minimum supported version. If the
