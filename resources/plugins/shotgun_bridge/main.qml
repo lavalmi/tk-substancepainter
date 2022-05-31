@@ -279,6 +279,20 @@ PainterPlugin
     return true;
   }
 
+  function newProject(data)
+  {
+    var data = {"path": "S:/projects/220523_substance_dev/production/assets/Prop/pr_testAssetA/Model/publish/maya/objects/mdl_main_prtestAssetAmdlmaingrp/fbx/pr_testAssetA_mdl_main_prtestAssetAmdlmaingrp.v001.fbx"};
+
+    var url = alg.fileIO.localFileToUrl(data.path);
+
+    var project_file = "file:///" + data.path;
+
+    // alg.project.create(data.path);
+    alg.project.create(project_file);
+
+    return url;
+  }
+
   function currentProjectPath(data)
   {
     try 
@@ -505,6 +519,7 @@ PainterPlugin
       registerCallback("GET_VERSION", getVersion);
       registerCallback("ENGINE_READY", engineReady);
       registerCallback("OPEN_PROJECT", openProject);
+      registerCallback("NEW_PROJECT", newProject);
       registerCallback("GET_CURRENT_PROJECT_PATH", currentProjectPath);
       registerCallback("SAVE_PROJECT", saveProject);
       registerCallback("SAVE_PROJECT_AS", saveProjectAs);
