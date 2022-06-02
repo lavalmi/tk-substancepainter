@@ -281,16 +281,22 @@ PainterPlugin
 
   function newProject(data)
   {
-    var data = {"path": "S:/projects/220523_substance_dev/production/assets/Prop/pr_testAssetA/Model/publish/maya/objects/mdl_main_prtestAssetAmdlmaingrp/fbx/pr_testAssetA_mdl_main_prtestAssetAmdlmaingrp.v001.fbx"};
+    var project_file = alg.fileIO.localFileToUrl(data.path);
+    var template_file;
 
-    var url = alg.fileIO.localFileToUrl(data.path);
+    if (data.template)
+    {
+        template_file = alg.fileIO.localFileToUrl(data.template);
 
-    var project_file = "file:///" + data.path;
+    }
+    else
+    {
+        template_file = [];
+    }
 
-    // alg.project.create(data.path);
-    alg.project.create(project_file);
+    alg.project.create(project_file, [], template_file);
 
-    return url;
+    return project_file;
   }
 
   function currentProjectPath(data)

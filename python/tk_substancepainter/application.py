@@ -216,8 +216,8 @@ class EngineClient(Client):
         result = self.send_and_receive("NEEDS_SAVING", path=path)
         return result
 
-    def new_project(self, path):
-        path = self.send_and_receive("NEW_PROJECT", path=path)
+    def new_project(self, path, template):
+        path = self.send_and_receive("NEW_PROJECT", path=path, template=template)
 
     def open_project(self, path):
         path = self.send_and_receive("OPEN_PROJECT", path=path)
