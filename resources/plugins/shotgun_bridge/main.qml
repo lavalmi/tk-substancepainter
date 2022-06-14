@@ -527,6 +527,7 @@ PainterPlugin
       registerCallback("OPEN_PROJECT", openProject);
       registerCallback("NEW_PROJECT", newProject);
       registerCallback("GET_CURRENT_PROJECT_PATH", currentProjectPath);
+      registerCallback("GET_CURRENT_PROJECT_MESH", currentProjectMesh);
       registerCallback("SAVE_PROJECT", saveProject);
       registerCallback("SAVE_PROJECT_AS", saveProjectAs);
       registerCallback("SAVE_PROJECT_AS_ACTION", saveProjectAsAction);
