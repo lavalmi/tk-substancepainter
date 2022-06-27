@@ -12,7 +12,7 @@ import os
 import sys
 import shutil
 import hashlib
-import six
+from tank_vendor import six
 import socket
 from distutils.version import LooseVersion
 

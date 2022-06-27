@@ -18,7 +18,7 @@ import time
 import inspect
 import logging
 import traceback
-import six
+from tank_vendor import six
 from functools import wraps
 from distutils.version import LooseVersion
 
