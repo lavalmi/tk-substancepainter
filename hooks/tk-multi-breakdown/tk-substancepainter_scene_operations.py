@@ -12,6 +12,7 @@ import os
 
 import sgtk
 from sgtk.errors import TankError
+from six.moves import tkinter
 
 
 __author__ = "Diego Garcia Huerta"
@@ -23,6 +24,7 @@ HookBaseClass = sgtk.get_hook_baseclass()
 
 RESOURCE_IN_USE_COLOR = "#e7a81d"
 RESOURCE_NOT_IN_USE_COLOR = "gray"
+RESOURCE_NOT_SUPPORTED_COLOR = "#e7a81d"
 
 
 class SubstancePainterResource(str):
@@ -53,6 +55,35 @@ class SubstancePainterResource(str):
         obj.resource = resource
         obj.in_use = in_use
         obj.nice_name = nice_name
+        return obj
+
+
+class SubstancePainterMesh(str):
+    """
+    Helper Class to store metadata per update item.
+
+    tk-multi-breakdown requires item['node'] to be a str. This is what is displayed in
+    the list of recognized items to update. We want to add metadata to each item
+    as what we want to display as name is not the actual item to update.
+    In our case, we want to display the nguiname of the resrouce, color in green
+    the items in used in the project, and also the resource id for reference.
+    As a str is required we are forced to inherit from str instead of the more
+    python friendly object + __repr__ magic method.
+    """
+
+    def __new__(cls, current_mesh):
+        text = (
+            "<span style='color:%s'><b>%s</span></b><br/>%s"
+            "<br/><nobr><sub></sub></nobr>"
+            % (
+                RESOURCE_NOT_SUPPORTED_COLOR,
+                "WARNING: Update via 'Breakdown' currently not supported. Update manually. "
+                "Copy path to your clipboard on pressing 'Update Selected'.",
+                current_mesh,
+            )
+        )
+        obj = str.__new__(cls, text)
+        obj.current_mesh = current_mesh
         return obj
 
 
@@ -149,6 +180,17 @@ class BreakdownSceneOperations(HookBaseClass):
         if refs:
             refs.sort(self._sort_by_used_and_nice_name)
 
+        current_mesh = engine.app.get_current_project_mesh()
+        if current_mesh:
+
+            refs.append(
+                {
+                    "type": "mesh",
+                    "path": current_mesh,
+                    "node": SubstancePainterMesh(os.path.basename(current_mesh)),
+                }
+            )
+
         return refs
 
     def update(self, items):
@@ -195,3 +237,18 @@ class BreakdownSceneOperations(HookBaseClass):
                     engine.app.update_document_resources(url, new_url)
 
                     engine.log_debug("Updated usage: %s" % usage)
+
+            if node_type == "mesh":
+                # Updating the project mesh file is not supported currently on the Substance Painter API.
+                # The user will be informed via the Helper Class "SubstancePainterMesh" that he needs to update
+                # the mesh file manually. + Copy new_path to clipboard.
+                engine.app.log_error("Updating Mesh-file is currently not supported. Please update manually. "
+                                     "Path: {} was copied to clipboard.".format(new_path))
+
+                # add new_path to clipboard
+                r = tkinter.Tk()
+                r.withdraw()
+                r.clipboard_clear()
+                r.clipboard_append(new_path)
+                r.update()
+                r.destroy()
