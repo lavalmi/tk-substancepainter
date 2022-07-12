@@ -211,10 +211,18 @@ class EngineClient(Client):
         self.log_debug("CURRENT_PROJECT_PATH: %s (%s)" % (path, type(path)))
         return path
 
+    def get_current_project_mesh(self):
+        path = self.send_and_receive("GET_CURRENT_PROJECT_MESH")
+        self.log_debug("CURRENT_PROJECT_MESH: %s (%s)" % (path, type(path)))
+        return path
+
     def need_saving(self):
         path = self.send_and_receive("GET_CURRENT_PROJECT_PATH")
         result = self.send_and_receive("NEEDS_SAVING", path=path)
         return result
+
+    def new_project(self, path, template):
+        path = self.send_and_receive("NEW_PROJECT", path=path, template=template)
 
     def open_project(self, path):
         path = self.send_and_receive("OPEN_PROJECT", path=path)

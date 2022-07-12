@@ -279,6 +279,26 @@ PainterPlugin
     return true;
   }
 
+  function newProject(data)
+  {
+    var project_file = alg.fileIO.localFileToUrl(data.path);
+    var template_file;
+
+    if (data.template)
+    {
+        template_file = alg.fileIO.localFileToUrl(data.template);
+
+    }
+    else
+    {
+        template_file = [];
+    }
+
+    alg.project.create(project_file, [], template_file);
+
+    return project_file;
+  }
+
   function currentProjectPath(data)
   {
     try 
@@ -505,7 +525,9 @@ PainterPlugin
       registerCallback("GET_VERSION", getVersion);
       registerCallback("ENGINE_READY", engineReady);
       registerCallback("OPEN_PROJECT", openProject);
+      registerCallback("NEW_PROJECT", newProject);
       registerCallback("GET_CURRENT_PROJECT_PATH", currentProjectPath);
+      registerCallback("GET_CURRENT_PROJECT_MESH", currentProjectMesh);
       registerCallback("SAVE_PROJECT", saveProject);
       registerCallback("SAVE_PROJECT_AS", saveProjectAs);
       registerCallback("SAVE_PROJECT_AS_ACTION", saveProjectAsAction);
