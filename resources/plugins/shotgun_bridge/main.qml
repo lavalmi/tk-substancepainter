@@ -283,6 +283,7 @@ PainterPlugin
   {
     var project_file = alg.fileIO.localFileToUrl(data.path);
     var template_file;
+    var settings = data.settings;
 
     if (data.template)
     {
@@ -294,7 +295,7 @@ PainterPlugin
         template_file = [];
     }
 
-    alg.project.create(project_file, [], template_file);
+    alg.project.create(project_file, [], template_file, settings);
 
     return project_file;
   }
