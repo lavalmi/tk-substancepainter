@@ -213,15 +213,15 @@ class SubstancePainterLauncher(SoftwareLauncher):
     # globbing and regex matches by replacing the named format placeholders
     # with an appropriate glob or regex string.
 
-    EXECUTABLE_TEMPLATES = {
-        "darwin": ["/Applications/Allegorithmic/Substance Painter.app"],
-        "win32": ["C:/Program Files/Adobe/Adobe Substance 3D Painter/Adobe Substance 3D Painter.exe"],
-        "linux2": [
-            "/usr/Allegorithmic/Substance Painter",
-            "/usr/Allegorithmic/Substance_Painter/Substance Painter",
-            "/opt/Allegorithmic/Substance_Painter/Substance Painter",
-        ],
-    }
+    # EXECUTABLE_TEMPLATES = {
+    #     "darwin": ["/Applications/Allegorithmic/Substance Painter.app"],
+    #     "win32": ["C:/Program Files/Adobe/Adobe Substance 3D Painter/Adobe Substance 3D Painter.exe"],
+    #     "linux2": [
+    #         "/usr/Allegorithmic/Substance Painter",
+    #         "/usr/Allegorithmic/Substance_Painter/Substance Painter",
+    #         "/opt/Allegorithmic/Substance_Painter/Substance Painter",
+    #     ],
+    # }
 
     @property
     def minimum_supported_version(self):
