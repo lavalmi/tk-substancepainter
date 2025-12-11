@@ -136,7 +136,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
             )
 
         if work_export_template and work_template:
-            path = publisher.engine.app.get_current_project_path()
+            path = publisher.engine.substance.get_current_project_path()
             fields = work_template.get_fields(path)
             export_path = work_export_template.apply_fields(fields)
 
@@ -152,14 +152,14 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         export_path = self.get_export_path(settings)
         if not export_path:
-            export_path = engine.app.get_project_export_path()
+            export_path = engine.substance.get_project_export_path()
 
         engine.show_busy(
             "Exporting textures",
             "Texture are being exported so they can " "be published.\n\nPlease wait...",
         )
 
-        map_export_info = engine.app.export_document_maps(export_path)
+        map_export_info = engine.substance.export_document_maps(export_path)
         engine.clear_busy()
 
         self.logger.debug("Collecting exported textures...")
@@ -190,14 +190,14 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         export_path = self.get_export_path(settings)
         if not export_path:
-            export_path = engine.app.get_project_export_path()
+            export_path = engine.substance.get_project_export_path()
 
         engine.show_busy(
             "Exporting textures",
             "Texture are being exported so they can " "be published.\n\nPlease wait...",
         )
 
-        map_export_info = engine.app.export_document_maps(export_path)
+        map_export_info = engine.substance.export_document_maps(export_path)
         engine.clear_busy()
 
         self.logger.debug("Collecting exported textures...")
@@ -232,7 +232,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
         engine = sgtk.platform.current_engine()
 
         # get the path to the current file
-        path = engine.app.get_current_project_path()
+        path = engine.substance.get_current_project_path()
 
         # determine the display name for the item
         if path:

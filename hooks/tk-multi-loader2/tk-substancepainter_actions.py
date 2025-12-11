@@ -203,4 +203,4 @@ class SubstancePainterActions(HookBaseClass):
 
         usage = params
         engine = sgtk.platform.current_engine()
-        result = engine.app.import_project_resource(path, usage, "Shotgun")
+        result = engine.substance.import_project_resource(path, usage, "Shotgun")

@@ -393,7 +393,7 @@ def _export_path():
     engine = sgtk.platform.current_engine()
 
     # get the path to the current file
-    path = engine.app.get_project_export_path()
+    path = engine.substance.get_project_export_path()
 
     if isinstance(path, str):
         path = path.encode("utf-8")

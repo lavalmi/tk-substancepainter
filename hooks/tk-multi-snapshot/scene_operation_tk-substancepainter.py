@@ -44,10 +44,10 @@ class SceneOperation(HookClass):
         engine = sgtk.platform.current_engine()
 
         if operation == "current_path":
-            return engine.app.get_current_project_path()
+            return engine.substance.get_current_project_path()
 
         elif operation == "open":
-            engine.app.open_project(file_path)
+            engine.substance.open_project(file_path)
 
         elif operation == "save":
-            engine.app.save_project()
+            engine.substance.save_project()

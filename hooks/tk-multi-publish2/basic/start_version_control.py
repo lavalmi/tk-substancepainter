@@ -283,7 +283,7 @@ def _session_path():
     engine = sgtk.platform.current_engine()
 
     # get the path to the current file
-    path = engine.app.get_current_project_path()
+    path = engine.substance.get_current_project_path()
 
     if isinstance(path, bytes):
         path = path.encode("utf-8")
@@ -301,7 +301,7 @@ def _save_session(path):
     ensure_folder_exists(folder)
 
     engine = sgtk.platform.current_engine()
-    engine.app.save_project_as(path)
+    engine.substance.save_project_as(path)
 
 
 # TODO: method duplicated in all the Substance Painter hooks
@@ -315,8 +315,8 @@ def _get_save_as_action():
     callback = _save_as
 
     # if workfiles2 is configured, use that for file save
-    if "tk-multi-workfiles2" in engine.apps:
-        app = engine.apps["tk-multi-workfiles2"]
+    if "tk-multi-workfiles2" in engine.substances:
+        app = engine.substances["tk-multi-workfiles2"]
         if hasattr(app, "show_file_save_dlg"):
             callback = app.show_file_save_dlg
 
@@ -344,4 +344,4 @@ def _get_version_docs_action():
 
 def _save_as():
     engine = sgtk.platform.current_engine()
-    engine.app.save_project_as_action()
+    engine.substance.save_project_as_action()
