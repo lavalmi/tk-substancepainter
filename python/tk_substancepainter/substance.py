@@ -117,9 +117,7 @@ class Substance:
         raise NotImplementedError("This feature is currently not implemented.")
 
     def get_resource_info(self, resource_url):
-        # return sp.resource.ResourceID.from_url(resource_url)
-        result = sp.js.evaluate(f"alg.resources.getResourceInfo({resource_url})")
-        return result
+        return sp.resource.ResourceID.from_url(resource_url)
 
     def get_project_export_path(self):
         raise NotImplementedError("This feature is currently not implemented.")
@@ -128,9 +126,6 @@ class Substance:
         raise NotImplementedError("This feature is currently not implemented.")
 
     def export_document_maps(self, destination):
-        sp.export.export_project_textures()
-
-
         # This is a trick to wait until the async process of
         # exporting textures finishes.
         self.__export_results = None
