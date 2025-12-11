@@ -126,33 +126,26 @@ class Substance:
         raise NotImplementedError("This feature is currently not implemented.")
 
     def export_document_maps(self, destination):
-        # This is a trick to wait until the async process of
-        # exporting textures finishes.
-        self.__export_results = None
-
-        def run_once_finished_exporting_maps(**kwargs):
-            self.__export_results = kwargs.get("map_infos", {})
-
-        self.engine.register_event_callback(
-            "EXPORT_FINISHED", run_once_finished_exporting_maps
-        )
-
         self.log_debug("Starting map export...")
-        result = self.send_and_receive("EXPORT_DOCUMENT_MAPS", destination=destination)
+        #result = self.send_and_receive("EXPORT_DOCUMENT_MAPS", destination=destination)
 
-        while self.__export_results is None:
-            self.log_debug("Waiting for maps to be exported ...")
-            QCoreApplication.processEvents()
-            time.sleep(self.wait_period)
+        export_options = sp.js.evaluate("alg.mapexport.getProjectExportOptions()")
+        export_preset = sp.js.evaluate("alg.mapexport.getProjectExportPreset()")
 
-        self.engine.unregister_event_callback(
-            "EXPORT_FINISHED", run_once_finished_exporting_maps
-        )
+        # TODO working command below
+        #   vvvvvvvvvvvvvvvvvvvvvvvvv
+        # result = sp.js.evaluate(
+        #     'alg.mapexport.exportDocumentMaps('
+        #     '"resource://davos/LAVA PBRMR?version=11006380353236710736.spexp", '
+        #     '"S:/projects/210823_workflow3d/production/assets/Prop/pr_bench/Surface/work/substancepainter/textures/jpk.v003.textures", '
+        #     '"exr", '
+        #     '{bitDepth: 32, dilation: 16, exportShaderParams: false, exportUSD: false, fileFormat: "exr", padding: "Infinite"}, '
+        #     '[]);' # ["bench_body", "bench_metal"]
+        # )
+        # TODO ^^^^^^^^^^^^^^^^^^^^^^
+        # TODO destination backslashes auf forward slahes wechseln
 
-        result = self.__export_results
-
-        # no need for this variable anymore
-        del self.__export_results
+        result = sp.js.evaluate(f"alg.mapexport.exportDocumentMaps({export_preset}, {destination}, {export_options.get('fileFormat')}, {export_options})")
 
         self.log_debug("Map export ended.")
         return result
