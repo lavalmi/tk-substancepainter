@@ -2,7 +2,7 @@
 Module that encapsulates access to the actual application
 
 """
-import time
+import sgtk
 import traceback
 
 import substance_painter as sp
@@ -16,7 +16,7 @@ __email__ = "diegogh2000@gmail.com"
 
 class Substance:
     def __init__(self, engine):
-        self.engine = engine
+        self.engine:sgtk.platform.Engine = engine
 
         # borrow the engine logger
         self.log_info = engine.log_info
@@ -78,6 +78,7 @@ class Substance:
         sp.project.create(mesh_file_path=path, template_file_path=template, settings=self._dict_to_proj_settings(settings))
 
     def open_project(self, path):
+        sp.resource.Shelves.exists(self.engine.context.get('project'))
         sp.project.open(path)
 
     def save_project_as(self, path):
@@ -114,13 +115,13 @@ class Substance:
         return sp.resource.import_project_resource(file_path=filename, resource_usage=usage, name=destination)
 
     def get_project_settings(self, key):
-        raise NotImplementedError("This feature is currently not implemented.")
+        return sp.js.evaluate("alg.project.settings.value(data.key, {})")
 
     def get_resource_info(self, resource_url):
         return sp.resource.ResourceID.from_url(resource_url)
 
     def get_project_export_path(self):
-        raise NotImplementedError("This feature is currently not implemented.")
+        return sp.js.evaluate("alg.mapexport.exportPath()")
 
     def get_map_export_information(self):
         raise NotImplementedError("This feature is currently not implemented.")
@@ -131,6 +132,13 @@ class Substance:
 
         export_options = sp.js.evaluate("alg.mapexport.getProjectExportOptions()")
         export_preset = sp.js.evaluate("alg.mapexport.getProjectExportPreset()")
+
+        # export_config = {
+        #     "exportShaderParams": False,
+        #     "exportPath": "C:/Damian_new/zzzzSubstanceTestExport",
+        #     "defaultExportPreset": export_preset
+        # }
+        # sp.export.export_project_textures(export_config)
 
         # TODO working command below
         #   vvvvvvvvvvvvvvvvvvvvvvvvv
@@ -144,8 +152,15 @@ class Substance:
         # )
         # TODO ^^^^^^^^^^^^^^^^^^^^^^
         # TODO destination backslashes auf forward slahes wechseln
-
-        result = sp.js.evaluate(f"alg.mapexport.exportDocumentMaps({export_preset}, {destination}, {export_options.get('fileFormat')}, {export_options})")
+        destination = destination.replace('\\', '/')
+        result = sp.js.evaluate(
+            ('alg.mapexport.exportDocumentMaps('
+            f'"{export_preset}", '
+            f'"{destination}", '
+            f'"{export_options.get("fileFormat")}", '
+            f"{export_options}, "
+            '[])').replace("'", '"').replace('False', 'false').replace('True', 'true')
+        )
 
         self.log_debug("Map export ended.")
         return result
