@@ -78,7 +78,12 @@ class Substance:
         sp.project.create(mesh_file_path=path, template_file_path=template, settings=self._dict_to_proj_settings(settings))
 
     def open_project(self, path):
-        sp.resource.Shelves.exists(self.engine.context.get('project'))
+        # shelf_name = self.engine.context.project.name
+        # shelf_path = self.engine.context
+        # if not sp.resource.Shelves.exists(shelf_name):
+            # sp.resource.Shelves.add(shelf_name, shelf_path)
+            #TODO add path to shelves
+            #TODO check whether the export presets are properly read this way
         sp.project.open(path)
 
     def save_project_as(self, path):
@@ -128,30 +133,17 @@ class Substance:
 
     def export_document_maps(self, destination):
         self.log_debug("Starting map export...")
-        #result = self.send_and_receive("EXPORT_DOCUMENT_MAPS", destination=destination)
 
         export_options = sp.js.evaluate("alg.mapexport.getProjectExportOptions()")
         export_preset = sp.js.evaluate("alg.mapexport.getProjectExportPreset()")
 
-        # export_config = {
-        #     "exportShaderParams": False,
-        #     "exportPath": "C:/Damian_new/zzzzSubstanceTestExport",
-        #     "defaultExportPreset": export_preset
-        # }
-        # sp.export.export_project_textures(export_config)
-
-        # TODO working command below
-        #   vvvvvvvvvvvvvvvvvvvvvvvvv
-        # result = sp.js.evaluate(
-        #     'alg.mapexport.exportDocumentMaps('
-        #     '"resource://davos/LAVA PBRMR?version=11006380353236710736.spexp", '
-        #     '"S:/projects/210823_workflow3d/production/assets/Prop/pr_bench/Surface/work/substancepainter/textures/jpk.v003.textures", '
-        #     '"exr", '
-        #     '{bitDepth: 32, dilation: 16, exportShaderParams: false, exportUSD: false, fileFormat: "exr", padding: "Infinite"}, '
-        #     '[]);' # ["bench_body", "bench_metal"]
-        # )
-        # TODO ^^^^^^^^^^^^^^^^^^^^^^
-        # TODO destination backslashes auf forward slahes wechseln
+        # TODO implement this via the python API and its config json:
+            # export_config = {
+            #     "exportShaderParams": False,
+            #     "exportPath": destination,
+            #     "defaultExportPreset": export_preset
+            # }
+            # sp.export.export_project_textures(export_config)
         destination = destination.replace('\\', '/')
         result = sp.js.evaluate(
             ('alg.mapexport.exportDocumentMaps('

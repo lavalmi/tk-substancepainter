@@ -205,11 +205,11 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         if publish_template:
             item.properties["publish_template"] = publish_template
         else:
-            error_msg = "Validation failed. Publish template {} not found".format(publish_template_setting.value) 
+            error_msg = "Validation failed. Publish template {} not found".format(publish_template_setting.value)
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
-        export_path = _export_path()
+        export_path = item.properties["path"]
         if not os.path.isdir(export_path):
             error_msg = "Validation failed. Export path does not exist on disk."
             self.logger.error(error_msg)
@@ -383,19 +383,3 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
                 % (publish_name, publish_type, ctx, e)
             )
         return sg_publishes
-
-
-def _export_path():
-    """
-    Return the path to the current session
-    :return:
-    """
-    engine = sgtk.platform.current_engine()
-
-    # get the path to the current file
-    path = engine.substance.get_project_export_path()
-
-    if isinstance(path, str):
-        path = path.encode("utf-8")
-
-    return path

@@ -391,8 +391,8 @@ def _get_save_as_action():
     callback = _save_as
 
     # if workfiles2 is configured, use that for file save
-    if "tk-multi-workfiles2" in engine.substances:
-        app = engine.substances["tk-multi-workfiles2"]
+    if "tk-multi-workfiles2" in engine.substance:
+        app = engine.substance["tk-multi-workfiles2"]
         if hasattr(app, "show_file_save_dlg"):
             callback = app.show_file_save_dlg
 
