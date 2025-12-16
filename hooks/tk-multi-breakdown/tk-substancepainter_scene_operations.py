@@ -192,6 +192,6 @@ class BreakdownSceneOperations(HookBaseClass):
                     engine.log_debug("Existing resource url: %s" % url)
                     engine.log_debug("New resource url: %s" % new_url)
 
-                    engine.substance.update_document_resources(url, new_url)
+                    engine.substance.update_document_resource(url, new_url)
 
                     engine.log_debug("Updated usage: %s" % usage)

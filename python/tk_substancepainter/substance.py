@@ -157,13 +157,13 @@ class Substance:
         self.log_debug("Map export ended.")
         return result
 
-    def update_document_resources(self, old_url, new_url):
+    def update_document_resource(self, old_url, new_url):
         old_id = sp.resource.ResourceID.from_url(old_url)
         new_id = sp.resource.ResourceID.from_url(new_url)
         return sp.resource.replace_project_resources({old_id: new_id})
 
     def document_resources(self):
-        return sp.resource.list_project_resources()
+        return [res.url() for res in sp.resource.list_project_resources()]
 
     def open_save_dialog(self):
         """

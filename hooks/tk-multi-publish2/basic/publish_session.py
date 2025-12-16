@@ -188,7 +188,7 @@ class SubstancePainterSessionPublishPlugin(HookBaseClass):
         self.logger.info(
             "Substance Painter '%s' plugin accepted the current session." % (self.name,)
         )
-        return {"accepted": True, "checked": True}
+        return {"accepted": True, "checked": True, "enabled": False}
 
     def validate(self, settings, item):
         """

@@ -25,7 +25,7 @@ SESSION_PUBLISHED_TYPE = "Substance Painter Project File"
 
 class SubstancePainterSessionCollector(HookBaseClass):
     """
-    Collector that operates on the substance painter session. Should inherit 
+    Collector that operates on the substance painter session. Should inherit
     from the basic collector hook.
     """
 
@@ -90,7 +90,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
     def process_current_session(self, settings, parent_item):
         """
-        Analyzes the current session open in Substance Painter and parents a 
+        Analyzes the current session open in Substance Painter and parents a
         subtree of items under the parent_item passed in.
 
         :param dict settings: Configured settings for this collector
@@ -152,7 +152,8 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         export_path = self.get_export_path(settings)
         if not export_path:
-            export_path = engine.substance.get_project_export_path()
+            self.logger.warning("Export path for exporting textures could not be found.")
+            return
 
         engine.show_busy(
             "Exporting textures",
@@ -164,23 +165,22 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         self.logger.debug("Collecting exported textures...")
 
-        if export_path:
-            textures = os.listdir(export_path)
-            if textures:
-                textures_item = parent_item.create_item(
-                    "substancepainter.textures",
-                    "Textures",
-                    "Substance Painter Textures",
-                )
+        textures = os.listdir(export_path)
+        if textures:
+            textures_item = parent_item.create_item(
+                "substancepainter.textures",
+                "Textures",
+                "Substance Painter Textures",
+            )
 
-                icon_path = os.path.join(
-                    self.disk_location, os.pardir, "icons", "texture.png"
-                )
+            icon_path = os.path.join(
+                self.disk_location, os.pardir, "icons", "texture.png"
+            )
 
-                textures_item.set_icon_from_path(icon_path)
+            textures_item.set_icon_from_path(icon_path)
 
-                textures_item.properties["path"] = export_path
-                textures_item.properties["publish_type"] = "Texture Folder"
+            textures_item.properties["path"] = export_path
+            textures_item.properties["publish_type"] = "Texture Folder"
 
     def collect_textures(self, settings, parent_item):
         publisher = self.parent

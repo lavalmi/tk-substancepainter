@@ -140,7 +140,7 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         List of item types that this plugin is interested in.
 
         Only items matching entries in this list will be presented to the
-        accept() method. Strings can contain glob patters such as *, for 
+        accept() method. Strings can contain glob patters such as *, for
         example ["substancepainter.*", "file.substancepainter"]
         """
         return ["substancepainter.textures"]
@@ -148,7 +148,7 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
     def accept(self, settings, item):
         """
         Method called by the publisher to determine if an item is of any
-        interest to this plugin. Only items matching the filters defined via 
+        interest to this plugin. Only items matching the filters defined via
         the item_filters property will be presented to this method.
 
         A publish task will be generated for each item accepted here. Returns a
@@ -189,7 +189,7 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         boolean to indicate validity.
 
         :param settings: Dictionary of Settings. The keys are strings, matching
-                         the keys returned in the settings property. The values 
+                         the keys returned in the settings property. The values
                          are `Setting` instances.
         :param item: Item to process
         :returns: True if item is valid, False otherwise.
@@ -209,21 +209,29 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
-        export_path = item.properties["path"]
-        if not os.path.isdir(export_path):
-            error_msg = "Validation failed. Export path does not exist on disk."
+        path = item.properties["path"]
+        work_template = self.sgtk.template_from_path(path)
+        if not work_template:
+            error_msg = "Validation failed. No template was found for the collected item's path."
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+        fields = work_template.get_fields(path)
+        export_path = publish_template.apply_fields(fields)
+
+        if os.path.isdir(export_path) and next(os.scandir(export_path), None):
+            error_msg = "Validation failed. Export path already exists and is not empty."
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
         item.properties["export_path"] = export_path
 
-        textures = os.listdir(export_path)
-        textures = [os.path.join(export_path, texture) for texture in textures]
+        textures = os.listdir(path)
+        textures = [os.path.join(path, texture) for texture in textures]
         textures = [texture for texture in textures if os.path.isfile(texture)]
-        self.logger.debug("Files in export path: %s" % textures)
+        self.logger.debug("Files in current path: %s" % textures)
 
         if not textures:
-            error_msg = "Validation failed. Export path does not contain any texture."
+            error_msg = "Validation failed. Current path does not contain any textures to be published."
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
@@ -246,20 +254,11 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         publish_template = item.properties["publish_template"]
         publish_type = item.properties["publish_type"]
 
-        # Get fields from the current context
-        fields = {}
-        ctx_fields = self.parent.context.as_template_fields(publish_template)
-        fields.update(ctx_fields)
+        # Get fields from export path
+        fields = publish_template.get_fields(item.properties["export_path"])
 
-        context_entity_type = self.parent.context.entity["type"]
-        publish_name = context_entity_type + "_textures"
-
-        existing_publishes = self._find_publishes(
-            self.parent.context, publish_name, publish_type
-        )
-        version = max([p["version_number"] for p in existing_publishes] or [0]) + 1
-        fields["version"] = version
-
+        publish_name = fields["name"]
+        version = fields["version"]
         publish_path = publish_template.apply_fields(fields)
         publish_path = sgtk.util.ShotgunPath.normalize(publish_path)
 
@@ -269,8 +268,8 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         textures = item.properties["textures"]
 
         for src in textures:
-            _, filenamefile = os.path.split(src)
-            dst = os.path.join(publish_path, filenamefile.decode())
+            _, filename = os.path.split(src)
+            dst = os.path.join(publish_path, filename)
             sgtk.util.filesystem.copy_file(src, dst)
 
         self.logger.info("A Publish will be created in Shotgun and linked to:")
@@ -322,6 +321,16 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
 
         self.logger.info("Publish registered!")
 
+        self.logger.info("Cleaning up work file textures...")
+        pardirs = set()
+        for src in textures:
+            pardirs.add(os.path.dirname(src))
+            self.logger.info(f"Deleting: {src}")
+            sgtk.util.filesystem.safe_delete_file(src)
+        for dir in pardirs:
+            if os.path.isdir(dir) and next(os.scandir(dir), None) is None:
+                sgtk.util.filesystem.safe_delete_folder(dir)
+
         # now that we've published. keep a handle on the path that was published
         item.properties["path"] = publish_path
 
@@ -343,13 +352,13 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         """
         Given a context, publish name and type, find all publishes from Shotgun
         that match.
-        
+
         :param ctx:             Context to use when looking for publishes
         :param publish_name:    The name of the publishes to look for
         :param publish_type:    The type of publishes to look for
-        
+
         :returns:               A list of Shotgun publish records that match the search
-                                criteria        
+                                criteria
         """
         publish_entity_type = sgtk.util.get_published_file_entity_type(self.parent.sgtk)
         if publish_entity_type == "PublishedFile":

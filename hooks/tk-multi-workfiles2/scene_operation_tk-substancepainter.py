@@ -88,5 +88,8 @@ class SceneOperation(HookClass):
             return True
 
         elif operation == "prepare_new":
-            # ask for the mesh file to load into a new project
-            pass
+            if context.entity:
+                engine.change_context(context)
+            command_set = engine.commands.get('Load...')
+            if command_set:
+                command_set['callback']()
