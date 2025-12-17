@@ -575,6 +575,7 @@ class SubstancePainterEngine(Engine):
         Cleanup after ourselves
         """
         self.logger.debug("%s: Destroying...", self)
+        self._menu_generator.destroy_menu()
 
     def _get_dialog_parent(self):
         """

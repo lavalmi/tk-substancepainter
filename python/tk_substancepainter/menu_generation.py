@@ -31,14 +31,19 @@ class MenuGenerator(object):
     def __init__(self, engine, menu_name):
         self._engine = engine
         self._menu_name = menu_name
-        self._handle = QtWidgets.QMenu(self._menu_name)
+        self._menu_handle = None
 
         self._dialogs = []
         self._ui_cache = []
 
+    def destroy_menu(self):
+        if self._menu_handle:
+            sp.ui.delete_ui_element(self._menu_handle)
+            self._menu_handle = None
+
     @property
     def menu_handle(self):
-        return self._handle
+        return self._menu_handle
 
     def create_menu(self, disabled=False):
         """
@@ -46,8 +51,8 @@ class MenuGenerator(object):
         In order to have commands enable/disable themselves based on the
         enable_callback, re-create the menu items every time.
         """
-
-        self.menu_handle.clear()
+        self.destroy_menu()
+        self._menu_handle = QtWidgets.QMenu(self._menu_name)
 
         if disabled:
             self.menu_handle.addMenu("Sgtk is disabled.")
@@ -108,8 +113,8 @@ class MenuGenerator(object):
         # now add all apps to main menu
         self._add_app_menu(commands_by_app)
 
-        # add menu to substance painter
-        sp.ui.add_menu(self.menu_handle)
+        # add menu to substance painter unless already present
+        sp.ui.add_menu(self._menu_handle)
 
     def _add_sub_menu(self, menu_name, parent_menu):
         sub_menu = QtWidgets.QMenu(title=menu_name, parent=parent_menu)

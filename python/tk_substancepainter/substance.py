@@ -2,19 +2,31 @@
 Module that encapsulates access to the actual application
 
 """
-import sgtk
 import traceback
 
+import sgtk
 import substance_painter as sp
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QFileDialog
-from PySide6.QtCore import QUrl
 
 __author__ = "Diego Garcia Huerta"
 __email__ = "diegogh2000@gmail.com"
 
 
 class Substance:
+    class Resource:
+        def __init__(self, resID:sp.resource.ResourceID):
+            self.name = resID.name
+            self.context = resID.context
+            self.location = resID.location().name
+            self.location_index = resID.location().value
+            self.version = resID.version
+            self.url = resID.url()
+
+        @classmethod
+        def from_url(cls, url):
+            return cls(sp.resource.ResourceID.from_url(url))
+
+
     def __init__(self, engine):
         self.engine:sgtk.platform.Engine = engine
 
@@ -75,22 +87,28 @@ class Substance:
         return False
 
     def new_project(self, path, template, settings):
-        sp.project.create(mesh_file_path=path, template_file_path=template, settings=self._dict_to_proj_settings(settings))
+        sp.project.create(
+            mesh_file_path=path,
+            template_file_path=template,
+            settings=self._dict_to_proj_settings(settings),
+        )
 
     def open_project(self, path):
         # shelf_name = self.engine.context.project.name
         # shelf_path = self.engine.context
         # if not sp.resource.Shelves.exists(shelf_name):
-            # sp.resource.Shelves.add(shelf_name, shelf_path)
-            #TODO add path to shelves
-            #TODO check whether the export presets are properly read this way
+        # sp.resource.Shelves.add(shelf_name, shelf_path)
+        # TODO add path to shelves
+        # TODO check whether the export presets are properly read this way
         sp.project.open(path)
 
     def save_project_as(self, path):
         try:
             sp.project.save_as(path)
         except sp.exception.ProjectError as e:
-            self.log_error(f"Cannot save project file as {path} due to exception:\n{traceback.format_exception(e)}")
+            self.log_error(
+                f"Cannot save project file as {path} due to exception:\n{traceback.format_exception(e)}"
+            )
             return False
         return True
 
@@ -101,7 +119,9 @@ class Substance:
         try:
             sp.project.save()
         except sp.exception.ProjectError as e:
-            self.log_error(f"Cannot save project file due to exception:\n{traceback.format_exception(e)}")
+            self.log_error(
+                f"Cannot save project file due to exception:\n{traceback.format_exception(e)}"
+            )
             return False
         return True
 
@@ -110,7 +130,7 @@ class Substance:
             sp.project.close()
 
     def execute(self, statement_str):
-        #TODO Rethink whether that is a feature that is still required, or should even be implemented in the first place.
+        # TODO Rethink whether that is a feature that is still required, or should even be implemented in the first place.
         return exec(statement_str)
 
     def extract_thumbnail(self, filename):
@@ -123,7 +143,7 @@ class Substance:
         return sp.js.evaluate("alg.project.settings.value(data.key, {})")
 
     def get_resource_info(self, resource_url):
-        return sp.resource.ResourceID.from_url(resource_url)
+        return Substance.Resource.from_url(resource_url)
 
     def get_project_export_path(self):
         return sp.js.evaluate("alg.mapexport.exportPath()")
@@ -138,12 +158,12 @@ class Substance:
         export_preset = sp.js.evaluate("alg.mapexport.getProjectExportPreset()")
 
         # TODO implement this via the python API and its config json:
-            # export_config = {
-            #     "exportShaderParams": False,
-            #     "exportPath": destination,
-            #     "defaultExportPreset": export_preset
-            # }
-            # sp.export.export_project_textures(export_config)
+        # export_config = {
+        #     "exportShaderParams": False,
+        #     "exportPath": destination,
+        #     "defaultExportPreset": export_preset
+        # }
+        # sp.export.export_project_textures(export_config)
         destination = destination.replace('\\', '/')
         result = sp.js.evaluate(
             ('alg.mapexport.exportDocumentMaps('
@@ -157,13 +177,21 @@ class Substance:
         self.log_debug("Map export ended.")
         return result
 
+    def update_document_mesh(self, url):
+        def reload_mesh_callback(status:sp.project.ReloadMeshStatus):
+            self.log_debug(status)
+            self.engine.clear_busy()
+
+        self.engine.show_busy("Reloading Mesh", "Substance is currrently reloading your mesh.\nPlease wait a moment.")
+        sp.project.reload_mesh(url, sp.project.MeshReloadingSettings(), reload_mesh_callback)
+
     def update_document_resource(self, old_url, new_url):
         old_id = sp.resource.ResourceID.from_url(old_url)
         new_id = sp.resource.ResourceID.from_url(new_url)
         return sp.resource.replace_project_resources({old_id: new_id})
 
     def document_resources(self):
-        return [res.url() for res in sp.resource.list_project_resources()]
+        return [Substance.Resource(res) for res in sp.resource.list_project_resources()]
 
     def open_save_dialog(self):
         """
@@ -175,7 +203,7 @@ class Substance:
             self.main_window(),  # parent widget
             "Save Project",  # dialog title
             "",  # initial directory
-            "Substance Painter files (*.spp)"  # file filter
+            "Substance Painter files (*.spp)",  # file filter
         )
         if file_path:
             sp.project.save_as(file_path, mode=sp.project.ProjectSaveMode.Full)

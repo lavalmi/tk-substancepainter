@@ -157,7 +157,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         engine.show_busy(
             "Exporting textures",
-            "Texture are being exported so they can " "be published.\n\nPlease wait...",
+            "Texture are being exported so they can be published.\n\nPlease wait...",
         )
 
         map_export_info = engine.substance.export_document_maps(export_path)
