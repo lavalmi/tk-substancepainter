@@ -40,7 +40,7 @@ configuration:
                      value to the current major version + 1."
         default_value: 3
 
-    debug_logging: 
+    debug_logging:
         type: bool
         description: Controls whether debug messages should be emitted to the logger
         default_value: false
@@ -99,8 +99,8 @@ configuration:
 
 # the Shotgun fields that this engine needs in order to operate correctly
 requires_shotgun_fields:
-        
-# More verbose description of this item 
+
+# More verbose description of this item
 display_name: "Shotgun Engine for Substance Painter"
 description: "Shotgun Integration for Substance Painter"
 
@@ -109,4 +109,4 @@ requires_shotgun_version:
 requires_core_version: "v0.18.8"
 
 frameworks:
-    - {"name": "tk-framework-unrealqt", "version": "v1.x.x"}
+

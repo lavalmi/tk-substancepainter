@@ -141,7 +141,11 @@ def setup_environment():
         sys.path.insert(0, SGTK_SUBSTANCEPAINTER_SGTK_MODULE_PATH)
 
 
-if __name__ == "__main__":
+def launch():
     # Fire up Toolkit and the environment engine when there's time.
     setup_environment()
     start_toolkit()
+
+
+if __name__ == "__main__":
+    launch()

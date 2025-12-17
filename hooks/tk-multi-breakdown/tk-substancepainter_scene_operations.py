@@ -29,10 +29,10 @@ class SubstancePainterResource(str):
     """
     Helper Class to store metadata per update item.
 
-    tk-multi-breakdown requires item['node'] to be a str. This is what is displayed in 
+    tk-multi-breakdown requires item['node'] to be a str. This is what is displayed in
     the list of recognized items to update. We want to add metadata to each item
     as what we want to display as name is not the actual item to update.
-    In our case, we want to display the nguiname of the resrouce, color in green 
+    In our case, we want to display the nguiname of the resrouce, color in green
     the items in used in the project, and also the resource id for reference.
     As a str is required we are forced to inherit from str instead of the more
     python friendly object + __repr__ magic method.
@@ -60,7 +60,7 @@ class BreakdownSceneOperations(HookBaseClass):
     """
     Breakdown operations for Substance Painter.
 
-    This implementation handles detection of Substance Painter resources, 
+    This implementation handles detection of Substance Painter resources,
     that have been loaded with the tk-multi-loader2 toolkit app.
     """
 
@@ -78,9 +78,9 @@ class BreakdownSceneOperations(HookBaseClass):
     def _document_resources_by_version(self, engine):
         resources_in_project = {}
 
-        in_use_resources = engine.app.document_resources()
+        in_use_resources = engine.substance.document_resources()
         for in_use_resource in in_use_resources:
-            res_info = engine.app.get_resource_info(in_use_resource)
+            res_info = engine.substance.get_resource_info(in_use_resource)
             if res_info:
                 resources_in_project[res_info["version"]] = res_info
 
@@ -92,8 +92,8 @@ class BreakdownSceneOperations(HookBaseClass):
         to analyze the current scene and return a list of references that are
         to be potentially operated on.
 
-        The return data structure is a list of dictionaries. Each scene 
-        reference that is returned should be represented by a dictionary with 
+        The return data structure is a list of dictionaries. Each scene
+        reference that is returned should be represented by a dictionary with
         three keys:
 
         - "attr": The filename attribute of the 'node' that is to be operated
@@ -105,7 +105,7 @@ class BreakdownSceneOperations(HookBaseClass):
 
         Toolkit will scan the list of items, see if any of the objects matches
         any templates and try to determine if there is a more recent version
-        available. Any such versions are then displayed in the UI as out of 
+        available. Any such versions are then displayed in the UI as out of
         date.
         """
 
@@ -124,10 +124,10 @@ class BreakdownSceneOperations(HookBaseClass):
         engine = sgtk.platform.current_engine()
 
         resources_in_project = self._document_resources_by_version(engine)
-        resources = engine.app.get_project_settings("tk-multi-loader2") or {}
+        resources = engine.substance.get_project_settings("tk-multi-loader2") or {}
 
         for url in resources.keys():
-            res_info = engine.app.get_resource_info(url)
+            res_info = engine.substance.get_resource_info(url)
 
             if res_info:
                 in_use = res_info["version"] in resources_in_project
@@ -184,7 +184,7 @@ class BreakdownSceneOperations(HookBaseClass):
                 url = res_info["url"]
 
                 for usage in res_info["usages"]:
-                    new_url = engine.app.import_project_resource(
+                    new_url = engine.substance.import_project_resource(
                         new_path, usage, "Shotgun"
                     )
 
@@ -192,6 +192,6 @@ class BreakdownSceneOperations(HookBaseClass):
                     engine.log_debug("Existing resource url: %s" % url)
                     engine.log_debug("New resource url: %s" % new_url)
 
-                    engine.app.update_document_resources(url, new_url)
+                    engine.substance.update_document_resource(url, new_url)
 
                     engine.log_debug("Updated usage: %s" % usage)

@@ -301,7 +301,7 @@ class SubstancePainterLauncher(SoftwareLauncher):
                 None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, path_buffer
             )
 
-            user_scripts_path = path_buffer.value + r"\Adobe\Adobe Substance 3D Painter\plugins"
+            user_scripts_path = path_buffer.value + r"\Adobe\Adobe Substance 3D Painter\python\plugins"
 
         else:
             user_scripts_path = os.path.expanduser(

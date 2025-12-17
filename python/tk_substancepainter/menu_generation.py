@@ -12,19 +12,16 @@
 Menu handling for Substnace Painter
 
 """
-
-import tank
-import sys
-import os
-import unicodedata
-
-
 __author__ = "Diego Garcia Huerta"
 __email__ = "diegogh2000@gmail.com"
 
+import os
+import sgtk
+import substance_painter as sp
+import sys
+import unicodedata
 
-from tank.platform.qt5 import QtWidgets, QtGui, QtCore, QtWebSockets, QtNetwork
-
+from PySide6 import QtWidgets, QtGui, QtCore, QtWebSockets, QtNetwork
 
 class MenuGenerator(object):
     """
@@ -34,27 +31,19 @@ class MenuGenerator(object):
     def __init__(self, engine, menu_name):
         self._engine = engine
         self._menu_name = menu_name
-        self._dialogs = []
+        self._menu_handle = None
 
-        self._widget = QtWidgets.QWidget()
-        self._handle = QtWidgets.QMenu(self._menu_name, self._widget)
+        self._dialogs = []
         self._ui_cache = []
 
     @property
     def menu_handle(self):
-        return self._handle
+        return self._menu_handle
 
-    def hide(self):
-        self.menu_handle.hide()
-
-    def show(self, pos=None):
-        pos = QtGui.QCursor.pos() if pos is None else QtCore.QPoint(pos[0], pos[1])
-        qApp = QtWidgets.QApplication.instance()
-        # qApp.setWindowState(QtCore.Qt.WindowActive)
-
-        self.menu_handle.activateWindow()
-        self.menu_handle.raise_()
-        self.menu_handle.exec_(pos)
+    def destroy_menu(self):
+        if self._menu_handle:
+            sp.ui.delete_ui_element(self._menu_handle)
+            self._menu_handle = None
 
     def create_menu(self, disabled=False):
         """
@@ -62,8 +51,8 @@ class MenuGenerator(object):
         In order to have commands enable/disable themselves based on the
         enable_callback, re-create the menu items every time.
         """
-
-        self.menu_handle.clear()
+        self.destroy_menu()
+        self._menu_handle = QtWidgets.QMenu(self._menu_name)
 
         if disabled:
             self.menu_handle.addMenu("Sgtk is disabled.")
@@ -73,7 +62,7 @@ class MenuGenerator(object):
         self._context_menu = self._add_context_menu()
 
         # add menu divider
-        self._add_divider(self.menu_handle)
+        self.menu_handle.addSeparator()
 
         # now enumerate all items and create menu objects for them
         menu_items = []
@@ -100,7 +89,7 @@ class MenuGenerator(object):
                     cmd.favourite = True
 
         # add menu divider
-        self._add_divider(self.menu_handle)
+        self.menu_handle.addSeparator()
 
         # now go through all of the menu items.
         # separate them out into various sections
@@ -124,17 +113,8 @@ class MenuGenerator(object):
         # now add all apps to main menu
         self._add_app_menu(commands_by_app)
 
-        # add menu divider
-        self._add_divider(self.menu_handle)
-
-        # add menu divider
-        self._add_menu_item("-- Exit Menu --", self.menu_handle, self.menu_handle.hide)
-
-    def _add_divider(self, parent_menu):
-        divider = QtWidgets.QAction(parent_menu)
-        divider.setSeparator(True)
-        parent_menu.addAction(divider)
-        return divider
+        # add menu to substance painter unless already present
+        sp.ui.add_menu(self._menu_handle)
 
     def _add_sub_menu(self, menu_name, parent_menu):
         sub_menu = QtWidgets.QMenu(title=menu_name, parent=parent_menu)
@@ -142,7 +122,7 @@ class MenuGenerator(object):
         return sub_menu
 
     def _add_menu_item(self, name, parent_menu, callback, properties=None):
-        action = QtWidgets.QAction(name, parent_menu)
+        action = QtGui.QAction(name, parent_menu)
         parent_menu.addAction(action)
         action.triggered.connect(callback)
 
@@ -176,7 +156,7 @@ class MenuGenerator(object):
             self._add_menu_item("Jump to File System", ctx_menu, self._jump_to_fs)
 
         # divider (apps may register entries below this divider)
-        self._add_divider(ctx_menu)
+        ctx_menu.addSeparator()
 
         return ctx_menu
 
