@@ -202,6 +202,10 @@ class SubstancePainterEngine(Engine):
         """
         return self._substance
 
+    @property
+    def menu_generator(self):
+        return self._menu_generator
+
     def show_message(self, msg, level="info"):
         """
         Displays a dialog with the message according to  the severity level

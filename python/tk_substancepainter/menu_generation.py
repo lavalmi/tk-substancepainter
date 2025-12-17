@@ -36,14 +36,14 @@ class MenuGenerator(object):
         self._dialogs = []
         self._ui_cache = []
 
+    @property
+    def menu_handle(self):
+        return self._menu_handle
+
     def destroy_menu(self):
         if self._menu_handle:
             sp.ui.delete_ui_element(self._menu_handle)
             self._menu_handle = None
-
-    @property
-    def menu_handle(self):
-        return self._menu_handle
 
     def create_menu(self, disabled=False):
         """

@@ -20,8 +20,9 @@ def start_plugin():
     launch_integration()
 
 def close_plugin():
-    pass
-
+    engine = sgtk.platform.current_engine()
+    if engine and engine.menu_generator:
+        engine.menu_generator.destroy_menu()
 
 if __name__ == "__main__":
     start_plugin()
