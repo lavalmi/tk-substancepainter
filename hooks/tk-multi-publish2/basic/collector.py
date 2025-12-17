@@ -180,7 +180,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
             textures_item.set_icon_from_path(icon_path)
 
             textures_item.properties["path"] = export_path
-            textures_item.properties["publish_type"] = "Texture Folder"
+            textures_item.properties["publish_type"] = "Surface Layerset"
 
     def collect_textures(self, settings, parent_item):
         publisher = self.parent
