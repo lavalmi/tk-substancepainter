@@ -115,6 +115,28 @@ class MenuGenerator(object):
 
         # add menu to substance painter unless already present
         sp.ui.add_menu(self._menu_handle)
+        self._move_menu_to_front()
+
+    def _move_menu_to_front(self):
+
+        main_window = sp.ui.get_main_window()
+        if not main_window or not hasattr(main_window, "menuBar"):
+            return
+
+        menu_bar = main_window.menuBar()
+        if not menu_bar:
+            return
+
+        menu_action = self._menu_handle.menuAction()
+        actions = menu_bar.actions()
+
+        if menu_action not in actions or actions[0] == menu_action:
+            return
+
+        first_action = actions[0]
+        menu_bar.removeAction(menu_action)
+        menu_bar.insertAction(first_action, menu_action)
+
 
     def _add_sub_menu(self, menu_name, parent_menu):
         sub_menu = QtWidgets.QMenu(title=menu_name, parent=parent_menu)

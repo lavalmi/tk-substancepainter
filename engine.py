@@ -362,7 +362,7 @@ class SubstancePainterEngine(Engine):
 
         # default menu name is Shotgun but this can be overridden
         # in the configuration to be sgtk in case of conflicts
-        self._menu_name = "Flow Production Tracking Toolkit (Formerly known as ShotGrid (Formerly known as Shotgun)) - (SGTK | FPTR)"
+        self._menu_name = "Flow Production Tracking"
         if self.get_setting("use_sgtk_as_menu_name", False):
             self._menu_name = "Sgtk"
 
