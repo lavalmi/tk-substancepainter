@@ -32,4 +32,4 @@ pip-log.txt
 # Max OS X Desktop Services Store files
 .DS_Store
 
-python/tk_substancepainter/__pycache__/
+__pycache__/
