@@ -23,6 +23,7 @@ import unicodedata
 
 from PySide6 import QtWidgets, QtGui, QtCore, QtWebSockets, QtNetwork
 
+
 class MenuGenerator(object):
     """
     Menu generation functionality.
@@ -66,7 +67,7 @@ class MenuGenerator(object):
 
         # now enumerate all items and create menu objects for them
         menu_items = []
-        for (cmd_name, cmd_details) in self._engine.commands.items():
+        for cmd_name, cmd_details in self._engine.commands.items():
             menu_items.append(AppCommand(cmd_name, self, cmd_details))
 
         # sort list of commands in name order
@@ -115,6 +116,24 @@ class MenuGenerator(object):
 
         # add menu to substance painter unless already present
         sp.ui.add_menu(self._menu_handle)
+
+        main_window = sp.ui.get_main_window()
+        if not main_window or not hasattr(main_window, "menuBar"):
+            return
+
+        menu_bar = main_window.menuBar()
+        if not menu_bar:
+            return
+
+        menu_action = self._menu_handle.menuAction()
+        actions = menu_bar.actions()
+
+        if menu_action not in actions or actions[0] == menu_action:
+            return
+
+        first_action = actions[0]
+        menu_bar.removeAction(menu_action)
+        menu_bar.insertAction(first_action, menu_action)
 
     def _add_sub_menu(self, menu_name, parent_menu):
         sub_menu = QtWidgets.QMenu(title=menu_name, parent=parent_menu)
@@ -251,7 +270,7 @@ class AppCommand(object):
         app_instance = self.properties["app"]
         engine = app_instance.engine
 
-        for (app_instance_name, app_instance_obj) in engine.apps.items():
+        for app_instance_name, app_instance_obj in engine.apps.items():
             if app_instance_obj == app_instance:
                 # found our app!
                 return app_instance_name
@@ -267,6 +286,7 @@ class AppCommand(object):
             doc_url = app.documentation_url
             # deal with nuke's inability to handle unicode. #fail
             from tank_vendor import six
+
             if six.PY3:
                 from pyreadline.py3k_compat import unicode
 
