@@ -449,6 +449,11 @@ class SubstancePainterEngine(Engine):
         Called when all apps have initialized
         """
 
+        self._substance.add_shelf(
+            self._substance.SHELF_NAME,
+            os.path.join(self.disk_location, "resources", "shelf"),
+        )
+
         # for some reason this engine command get's lost so we add it back
         self.__register_reload_command()
 
