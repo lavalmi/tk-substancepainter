@@ -204,8 +204,8 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         icon_path = os.path.join(self.disk_location, os.pardir, "icons", "texture.png")
 
-        for texture_set_name, texture_set in map_export_info.items():
-            for texture_id, texture_file in texture_set.items():
+        for _, texture_files in map_export_info.items():
+            for texture_file in texture_files:
                 if os.path.exists(texture_file):
                     _, filenamefile = os.path.split(texture_file)
                     texture_name, _ = os.path.splitext(filenamefile)

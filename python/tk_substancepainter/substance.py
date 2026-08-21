@@ -154,28 +154,41 @@ class Substance:
     def export_document_maps(self, destination):
         self.log_debug("Starting map export...")
 
-        export_options = sp.js.evaluate("alg.mapexport.getProjectExportOptions()")
-        export_preset = sp.js.evaluate("alg.mapexport.getProjectExportPreset()")
-
-        # TODO implement this via the python API and its config json:
-        # export_config = {
-        #     "exportShaderParams": False,
-        #     "exportPath": destination,
-        #     "defaultExportPreset": export_preset
-        # }
-        # sp.export.export_project_textures(export_config)
-        destination = destination.replace('\\', '/')
-        result = sp.js.evaluate(
-            ('alg.mapexport.exportDocumentMaps('
-            f'"{export_preset}", '
-            f'"{destination}", '
-            f'"{export_options.get("fileFormat")}", '
-            f"{export_options}, "
-            '[])').replace("'", '"').replace('False', 'false').replace('True', 'true')
+        preset = next(
+            (
+                preset
+                for preset in sp.export.list_resource_export_presets()
+                if preset.resource_id.name == "Lava EXR"
+            ),
+            None,
         )
+        if preset is None:
+            raise RuntimeError("The 'Lava EXR' export preset is not available.")
+
+        export_list = [
+            {"rootPath": str(stack)}
+            for texture_set in sp.textureset.all_texture_sets()
+            for stack in texture_set.all_stacks()
+        ]
+        if not export_list:
+            raise RuntimeError("The project has no texture sets to export.")
+
+        result = sp.export.export_project_textures(
+            {
+                "exportShaderParams": False,
+                "exportPath": destination.replace("\\", "/"),
+                "defaultExportPreset": preset.resource_id.url(),
+                "exportList": export_list,
+                "exportParameters": [
+                    {"parameters": {"paddingAlgorithm": "infinite"}}
+                ],
+            }
+        )
+        if result.status != sp.export.ExportStatus.Success:
+            raise RuntimeError(result.message)
 
         self.log_debug("Map export ended.")
-        return result
+        return result.textures
 
     def update_document_mesh(self, url):
         def reload_mesh_callback(status:sp.project.ReloadMeshStatus):
