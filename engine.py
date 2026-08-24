@@ -449,6 +449,8 @@ class SubstancePainterEngine(Engine):
         Called when all apps have initialized
         """
 
+        self._register_project_shelf(self.context)
+
         # for some reason this engine command get's lost so we add it back
         self.__register_reload_command()
 
@@ -481,11 +483,24 @@ class SubstancePainterEngine(Engine):
         # a context is changed
         self.__register_open_log_folder_command()
         self.__register_reload_command()
+        self._register_project_shelf(new_context)
 
         if self.get_setting("automatic_context_switch", True):
             # finally create the menu with the new context if needed
             if old_context != new_context:
                 self.create_shotgun_menu()
+
+    def _register_project_shelf(self, context):
+        if not context or not context.project or not context.sgtk.project_path:
+            return
+
+        shelf_path = os.path.join(
+            context.sgtk.project_path,
+            "pipeline",
+            "substance_shelf",
+        )
+        if os.path.isdir(shelf_path):
+            self._substance.add_shelf(context.project["name"], shelf_path)
 
     def _run_app_instance_commands(self):
         """

@@ -139,6 +139,14 @@ class Substance:
     def import_project_resource(self, filename, usage, destination):
         return sp.resource.import_project_resource(file_path=filename, resource_usage=usage, name=destination)
 
+    def add_shelf(self, name, path):
+        shelf = (
+            sp.resource.Shelf(name)
+            if sp.resource.Shelves.exists(name)
+            else sp.resource.Shelves.add(name, path)
+        )
+        shelf.refresh()
+
     def get_project_settings(self, key):
         return sp.js.evaluate("alg.project.settings.value(data.key, {})")
 
