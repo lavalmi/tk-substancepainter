@@ -13,8 +13,6 @@ __email__ = "diegogh2000@gmail.com"
 
 
 class Substance:
-    SHELF_NAME = "tk-substancepainter"
-
     class Resource:
         def __init__(self, resID:sp.resource.ResourceID):
             self.name = resID.name
@@ -141,14 +139,6 @@ class Substance:
     def import_project_resource(self, filename, usage, destination):
         return sp.resource.import_project_resource(file_path=filename, resource_usage=usage, name=destination)
 
-    def add_shelf(self, name, path):
-        shelf = (
-            sp.resource.Shelf(name)
-            if sp.resource.Shelves.exists(name)
-            else sp.resource.Shelves.add(name, path)
-        )
-        shelf.refresh()
-
     def get_project_settings(self, key):
         return sp.js.evaluate("alg.project.settings.value(data.key, {})")
 
@@ -168,8 +158,7 @@ class Substance:
             (
                 preset
                 for preset in sp.export.list_resource_export_presets()
-                if preset.resource_id.context == self.SHELF_NAME
-                and preset.resource_id.name == "Lava EXR"
+                if preset.resource_id.name == "Lava EXR"
             ),
             None,
         )
