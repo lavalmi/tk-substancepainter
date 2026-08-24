@@ -158,12 +158,12 @@ class Substance:
             (
                 preset
                 for preset in sp.export.list_resource_export_presets()
-                if preset.resource_id.name == "Lava EXR"
+                if preset.resource_id.name == "Lava_EXR"
             ),
             None,
         )
         if preset is None:
-            raise RuntimeError("The 'Lava EXR' export preset is not available.")
+            raise RuntimeError("The 'Lava_EXR' export preset is not available.")
 
         export_list = [
             {"rootPath": str(stack)}
