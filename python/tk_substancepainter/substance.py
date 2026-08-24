@@ -159,7 +159,7 @@ class Substance:
     def get_map_export_information(self):
         raise NotImplementedError("This feature is currently not implemented.")
 
-    def export_document_maps(self, destination):
+    def export_document_maps(self, destination, size_log2):
         self.log_debug("Starting map export...")
 
         preset = next(
@@ -188,7 +188,12 @@ class Substance:
                 "defaultExportPreset": preset.resource_id.url(),
                 "exportList": export_list,
                 "exportParameters": [
-                    {"parameters": {"paddingAlgorithm": "infinite"}}
+                    {
+                        "parameters": {
+                            "paddingAlgorithm": "infinite",
+                            "sizeLog2": size_log2,
+                        }
+                    }
                 ],
             }
         )
