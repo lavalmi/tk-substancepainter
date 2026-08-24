@@ -211,7 +211,7 @@ class SubstancePainterEngine(Engine):
         Displays a dialog with the message according to  the severity level
         specified.
         """
-        if self._qt_app_central_widget: #TODO! Fix this as the var does not exist anymore
+        if self.has_ui:
             from PySide6 import QtWidgets, QtGui, QtCore
 
             level_icon = {
@@ -220,7 +220,7 @@ class SubstancePainterEngine(Engine):
                 "warning": QtWidgets.QMessageBox.Warning,
             }
 
-            dlg = QtWidgets.QMessageBox(self._qt_app_central_widget)
+            dlg = QtWidgets.QMessageBox(self._substance.main_window())
             dlg.setIcon(level_icon[level])
             dlg.setText(msg)
             dlg.setWindowTitle("Shotgun Substance Painter Engine")

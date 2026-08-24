@@ -160,8 +160,14 @@ class SubstancePainterSessionCollector(HookBaseClass):
             "Texture are being exported so they can be published.\n\nPlease wait...",
         )
 
-        map_export_info = engine.substance.export_document_maps(export_path)
-        engine.clear_busy()
+        try:
+            try:
+                map_export_info = engine.substance.export_document_maps(export_path)
+            finally:
+                engine.clear_busy()
+        except Exception as error:
+            engine.show_error("Texture export failed:\n\n%s" % error)
+            raise
 
         self.logger.debug("Collecting exported textures...")
 
@@ -197,8 +203,14 @@ class SubstancePainterSessionCollector(HookBaseClass):
             "Texture are being exported so they can " "be published.\n\nPlease wait...",
         )
 
-        map_export_info = engine.substance.export_document_maps(export_path)
-        engine.clear_busy()
+        try:
+            try:
+                map_export_info = engine.substance.export_document_maps(export_path)
+            finally:
+                engine.clear_busy()
+        except Exception as error:
+            engine.show_error("Texture export failed:\n\n%s" % error)
+            raise
 
         self.logger.debug("Collecting exported textures...")
 
