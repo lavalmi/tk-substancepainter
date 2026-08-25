@@ -500,7 +500,14 @@ class SubstancePainterEngine(Engine):
             "substance_shelf",
         )
         if os.path.isdir(shelf_path):
-            self._substance.add_shelf(context.project["name"], shelf_path)
+            try:
+                self._substance.add_shelf(context.project["name"], shelf_path)
+            except Exception as error:
+                self.log_warning(
+                    "Unable to register project Substance shelf at '{}': {}".format(
+                        shelf_path, error
+                    )
+                )
 
     def _run_app_instance_commands(self):
         """

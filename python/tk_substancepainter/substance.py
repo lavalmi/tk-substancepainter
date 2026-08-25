@@ -2,6 +2,7 @@
 Module that encapsulates access to the actual application
 
 """
+import os
 import traceback
 
 import sgtk
@@ -140,12 +141,25 @@ class Substance:
         return sp.resource.import_project_resource(file_path=filename, resource_usage=usage, name=destination)
 
     def add_shelf(self, name, path):
-        shelf = (
-            sp.resource.Shelf(name)
-            if sp.resource.Shelves.exists(name)
-            else sp.resource.Shelves.add(name, path)
-        )
+        normalized_path = os.path.normcase(os.path.normpath(path))
+
+        for shelf in sp.resource.Shelves.all():
+            shelf_path = os.path.normcase(os.path.normpath(str(shelf.path())))
+            if shelf_path == normalized_path:
+                shelf.refresh()
+                return shelf
+
+        if sp.resource.Shelves.exists(name):
+            shelf = sp.resource.Shelf(name)
+            raise ValueError(
+                "Shelf '{}' already points to '{}', not '{}'.".format(
+                    name, shelf.path(), path
+                )
+            )
+
+        shelf = sp.resource.Shelves.add(name, path)
         shelf.refresh()
+        return shelf
 
     def get_project_settings(self, key):
         return sp.js.evaluate("alg.project.settings.value(data.key, {})")
