@@ -192,6 +192,7 @@ class SubstancePainterEngine(Engine):
         """
         self._dcc_app = None
         self._menu_generator = None
+        self._project_shelf_name = None
 
         Engine.__init__(self, *args, **kwargs)
 
@@ -205,6 +206,10 @@ class SubstancePainterEngine(Engine):
     @property
     def menu_generator(self):
         return self._menu_generator
+
+    @property
+    def project_shelf_name(self):
+        return self._project_shelf_name
 
     def show_message(self, msg, level="info"):
         """
@@ -491,23 +496,46 @@ class SubstancePainterEngine(Engine):
                 self.create_shotgun_menu()
 
     def _register_project_shelf(self, context):
+        self._project_shelf_name = None
         if not context or not context.project or not context.sgtk.project_path:
             return
 
-        shelf_path = os.path.join(
-            context.sgtk.project_path,
-            "pipeline",
-            "substance_shelf",
+        version_tag = "_".join(
+            str(part) for part in self._substance.get_application_version_info()
         )
-        if os.path.isdir(shelf_path):
+        pipeline_path = os.path.join(context.sgtk.project_path, "pipeline")
+        shelves = (
+            (
+                "{}_{}".format(context.project["name"], version_tag),
+                os.path.join(pipeline_path, "substance_shelf_{}".format(version_tag)),
+            ),
+            (context.project["name"], os.path.join(pipeline_path, "substance_shelf")),
+        )
+
+        for shelf_name, shelf_path in shelves:
+            if not os.path.isdir(shelf_path):
+                continue
             try:
-                self._substance.add_shelf(context.project["name"], shelf_path)
+                shelf = self._substance.add_shelf(shelf_name, shelf_path)
+                self._project_shelf_name = shelf.name()
+                if not shelf_path.endswith(version_tag):
+                    self.log_warning(
+                        "Using legacy unversioned Substance shelf: {}".format(shelf_path)
+                    )
+                return
             except Exception as error:
                 self.log_warning(
                     "Unable to register project Substance shelf at '{}': {}".format(
                         shelf_path, error
                     )
                 )
+
+        self.log_warning(
+            "No Substance shelf found for Painter {} in '{}'.".format(
+                ".".join(str(part) for part in self._substance.get_application_version_info()),
+                pipeline_path,
+            )
+        )
 
     def _run_app_instance_commands(self):
         """

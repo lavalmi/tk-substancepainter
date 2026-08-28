@@ -74,6 +74,9 @@ class Substance:
     def get_application_version(self):
         return sp.application.version()
 
+    def get_application_version_info(self):
+        return sp.application.version_info()
+
     def get_current_project_path(self):
         if sp.project.is_open():
             return sp.project.file_path()
@@ -176,16 +179,21 @@ class Substance:
     def export_document_maps(self, destination, size_log2):
         self.log_debug("Starting map export...")
 
+        shelf_name = self.engine.project_shelf_name
         preset = next(
             (
                 preset
                 for preset in sp.export.list_resource_export_presets()
                 if preset.resource_id.name == "Lava_EXR"
+                and preset.resource_id.context == shelf_name
             ),
             None,
         )
         if preset is None:
-            raise RuntimeError("The 'Lava_EXR' export preset is not available.")
+            raise RuntimeError(
+                "The 'Lava_EXR' export preset is not available in the managed "
+                "project shelf '{}'.".format(shelf_name or "<not registered>")
+            )
 
         export_list = [
             {"rootPath": str(stack)}
