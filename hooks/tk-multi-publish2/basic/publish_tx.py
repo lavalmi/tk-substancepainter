@@ -64,7 +64,7 @@ class SubstancePainterTxPublishPlugin(HookBaseClass):
 
         job_id_str = self._submit_rr_job(publish_path, sources)
         self.logger.info(
-            "Submitted TXGen job {} for {} EXR(s) in '{}'.".format(
+            "Submitted OIIOJob Make TX job {} for {} EXR(s) in '{}'.".format(
                 job_id_str, len(sources), publish_path
             )
         )
@@ -85,13 +85,13 @@ class SubstancePainterTxPublishPlugin(HookBaseClass):
 
         app = rrJob._RenderAppBasic()
         app.clear()
-        app.name = "TXGen"
-        app.rendererName = "Folder"
+        app.name = "OIIOJob"
+        app.rendererName = "Make TX"
         app.setVersionBoth("1.0")
 
-        job = rrSubmitLib.createEmptyJob2(sources[0], "TXGen distributed folder 1.0")
+        job = rrSubmitLib.createEmptyJob2(sources[0], "OIIOJob Make TX 1.0")
         job.renderApp = app
-        job.customSceneName = "TXGen DISTRIBUTED - {}".format(
+        job.customSceneName = "OIIOJob MAKE TX - {}".format(
             os.path.basename(publish_path)
         )
         job.layer = "One EXR per RR frame"
@@ -99,9 +99,9 @@ class SubstancePainterTxPublishPlugin(HookBaseClass):
         job.seqEnd = len(sources)
         job.seqStep = 1
         job.imageFileName = os.path.join(
-            publish_path, "_tx", "TXGen_RR_frame.####.tx"
+            publish_path, "_tx", "OIIOJob_RR_frame.####.tx"
         )
-        job.customSet_Str("rrEnvList", "TXGEN_FOLDER=" + publish_path + "~~~")
+        job.customSet_Str("rrEnvList", "OIIO_INPUT_FOLDER=" + publish_path + "~~~")
 
         job.customDataAppend_Str(
             "rrSubmitterParameter",
@@ -110,7 +110,7 @@ class SubstancePainterTxPublishPlugin(HookBaseClass):
 
         submitter.addJob(job)
         if not submitter.submitJobs():
-            raise Exception("Royal Render rejected the TXGen submission.")
+            raise Exception("Royal Render rejected the OIIOJob Make TX submission.")
 
         job_id = submitter.jobsSendID(0)
         return rrJob.jID2Str(job_id)
