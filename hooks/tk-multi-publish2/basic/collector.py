@@ -102,11 +102,34 @@ class SubstancePainterSessionCollector(HookBaseClass):
         item = self.collect_current_substancepainter_session(settings, parent_item)
 
         if item:
+            size_log2 = self.select_export_resolution()
+            if size_log2 is None:
+                return
+
             publish_as_folder_setting = settings.get("Publish Textures as Folder")
             if publish_as_folder_setting and publish_as_folder_setting.value:
-                resource_items = self.collect_textures_as_folder(settings, item)
+                resource_items = self.collect_textures_as_folder(
+                    settings, item, size_log2
+                )
             else:
-                resource_items = self.collect_textures(settings, item)
+                resource_items = self.collect_textures(settings, item, size_log2)
+
+    def select_export_resolution(self):
+        from PySide6.QtWidgets import QInputDialog
+
+        resolutions = ("1K", "2K", "4K", "8K")
+        resolution, accepted = QInputDialog.getItem(
+            self.parent.engine.substance.main_window(),
+            "Texture Export Resolution",
+            "Resolution:",
+            resolutions,
+            2,
+            False,
+        )
+        if not accepted:
+            return None
+
+        return {"1K": 10, "2K": 11, "4K": 12, "8K": 13}[resolution]
 
     def get_export_path(self, settings):
         publisher = self.parent
@@ -144,7 +167,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
             return export_path
 
-    def collect_textures_as_folder(self, settings, parent_item):
+    def collect_textures_as_folder(self, settings, parent_item, size_log2):
         publisher = self.parent
         engine = publisher.engine
 
@@ -160,8 +183,16 @@ class SubstancePainterSessionCollector(HookBaseClass):
             "Texture are being exported so they can be published.\n\nPlease wait...",
         )
 
-        map_export_info = engine.substance.export_document_maps(export_path)
-        engine.clear_busy()
+        try:
+            try:
+                map_export_info = engine.substance.export_document_maps(
+                    export_path, size_log2
+                )
+            finally:
+                engine.clear_busy()
+        except Exception as error:
+            engine.show_error("Texture export failed:\n\n%s" % error)
+            raise
 
         self.logger.debug("Collecting exported textures...")
 
@@ -182,7 +213,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
             textures_item.properties["path"] = export_path
             textures_item.properties["publish_type"] = "Surface Layerset"
 
-    def collect_textures(self, settings, parent_item):
+    def collect_textures(self, settings, parent_item, size_log2):
         publisher = self.parent
         engine = sgtk.platform.current_engine()
 
@@ -197,15 +228,23 @@ class SubstancePainterSessionCollector(HookBaseClass):
             "Texture are being exported so they can " "be published.\n\nPlease wait...",
         )
 
-        map_export_info = engine.substance.export_document_maps(export_path)
-        engine.clear_busy()
+        try:
+            try:
+                map_export_info = engine.substance.export_document_maps(
+                    export_path, size_log2
+                )
+            finally:
+                engine.clear_busy()
+        except Exception as error:
+            engine.show_error("Texture export failed:\n\n%s" % error)
+            raise
 
         self.logger.debug("Collecting exported textures...")
 
         icon_path = os.path.join(self.disk_location, os.pardir, "icons", "texture.png")
 
-        for texture_set_name, texture_set in map_export_info.items():
-            for texture_id, texture_file in texture_set.items():
+        for _, texture_files in map_export_info.items():
+            for texture_file in texture_files:
                 if os.path.exists(texture_file):
                     _, filenamefile = os.path.split(texture_file)
                     texture_name, _ = os.path.splitext(filenamefile)
