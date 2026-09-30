@@ -102,34 +102,112 @@ class SubstancePainterSessionCollector(HookBaseClass):
         item = self.collect_current_substancepainter_session(settings, parent_item)
 
         if item:
-            size_log2 = self.select_export_resolution()
-            if size_log2 is None:
+            export_options = self.select_export_options()
+            if export_options is None:
                 return
 
             publish_as_folder_setting = settings.get("Publish Textures as Folder")
             if publish_as_folder_setting and publish_as_folder_setting.value:
                 resource_items = self.collect_textures_as_folder(
-                    settings, item, size_log2
+                    settings,
+                    item,
+                    export_options["size_log2"],
+                    export_options["root_paths"],
+                    export_options["carry_forward"],
                 )
             else:
-                resource_items = self.collect_textures(settings, item, size_log2)
+                resource_items = self.collect_textures(
+                    settings,
+                    item,
+                    export_options["size_log2"],
+                    export_options["root_paths"],
+                )
 
-    def select_export_resolution(self):
-        from PySide6.QtWidgets import QInputDialog
+    def select_export_options(self):
+        from PySide6 import QtCore, QtWidgets
 
-        resolutions = ("1K", "2K", "4K", "8K")
-        resolution, accepted = QInputDialog.getItem(
-            self.parent.engine.substance.main_window(),
-            "Texture Export Resolution",
-            "Resolution:",
-            resolutions,
-            2,
-            False,
-        )
-        if not accepted:
+        root_paths = self.parent.engine.substance.get_document_export_stacks()
+        if not root_paths:
+            self.parent.engine.show_error("The project has no texture sets to export.")
             return None
 
-        return {"1K": 10, "2K": 11, "4K": 12, "8K": 13}[resolution]
+        dialog = QtWidgets.QDialog(self.parent.engine.substance.main_window())
+        dialog.setWindowTitle("Publish Substance Textures")
+        dialog.resize(520, 560)
+
+        layout = QtWidgets.QVBoxLayout(dialog)
+        layout.addWidget(QtWidgets.QLabel("Export resolution:"))
+        resolution = QtWidgets.QComboBox(dialog)
+        resolution.addItems(("1K", "2K", "4K", "8K"))
+        resolution.setCurrentText("4K")
+        layout.addWidget(resolution)
+
+        layout.addWidget(QtWidgets.QLabel("Texture sets to export:"))
+        texture_sets = QtWidgets.QListWidget(dialog)
+        for root_path in sorted(root_paths, key=str.lower):
+            list_item = QtWidgets.QListWidgetItem(root_path, texture_sets)
+            list_item.setFlags(
+                list_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable
+            )
+            list_item.setCheckState(QtCore.Qt.CheckState.Checked)
+        layout.addWidget(texture_sets, 1)
+
+        selection_buttons = QtWidgets.QHBoxLayout()
+        select_all = QtWidgets.QPushButton("Select all", dialog)
+        select_none = QtWidgets.QPushButton("Select none", dialog)
+        selection_buttons.addWidget(select_all)
+        selection_buttons.addWidget(select_none)
+        selection_buttons.addStretch(1)
+        layout.addLayout(selection_buttons)
+
+        carry_forward = QtWidgets.QCheckBox(
+            "Copy unchanged files from previous texture publish", dialog
+        )
+        carry_forward.setChecked(False)
+        layout.addWidget(carry_forward)
+
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok
+            | QtWidgets.QDialogButtonBox.StandardButton.Cancel,
+            parent=dialog,
+        )
+        layout.addWidget(buttons)
+
+        def set_all(check_state):
+            for index in range(texture_sets.count()):
+                texture_sets.item(index).setCheckState(check_state)
+
+        select_all.clicked.connect(
+            lambda: set_all(QtCore.Qt.CheckState.Checked)
+        )
+        select_none.clicked.connect(
+            lambda: set_all(QtCore.Qt.CheckState.Unchecked)
+        )
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        if dialog.exec() != QtWidgets.QDialog.DialogCode.Accepted:
+            return None
+
+        selected_root_paths = [
+            texture_sets.item(index).text()
+            for index in range(texture_sets.count())
+            if texture_sets.item(index).checkState()
+            == QtCore.Qt.CheckState.Checked
+        ]
+        if not selected_root_paths:
+            self.parent.engine.show_error(
+                "Select at least one texture set to export."
+            )
+            return None
+
+        return {
+            "size_log2": {"1K": 10, "2K": 11, "4K": 12, "8K": 13}[
+                resolution.currentText()
+            ],
+            "root_paths": selected_root_paths,
+            "carry_forward": carry_forward.isChecked(),
+        }
 
     def get_export_path(self, settings):
         publisher = self.parent
@@ -167,7 +245,9 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
             return export_path
 
-    def collect_textures_as_folder(self, settings, parent_item, size_log2):
+    def collect_textures_as_folder(
+        self, settings, parent_item, size_log2, root_paths, carry_forward
+    ):
         publisher = self.parent
         engine = publisher.engine
 
@@ -186,7 +266,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
         try:
             try:
                 map_export_info = engine.substance.export_document_maps(
-                    export_path, size_log2
+                    export_path, size_log2, root_paths=root_paths
                 )
             finally:
                 engine.clear_busy()
@@ -196,7 +276,15 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
         self.logger.debug("Collecting exported textures...")
 
-        textures = os.listdir(export_path)
+        textures = sorted(
+            {
+                os.path.normpath(texture)
+                for texture_files in map_export_info.values()
+                for texture in texture_files
+                if os.path.isfile(texture)
+            },
+            key=str.lower,
+        )
         if textures:
             textures_item = parent_item.create_item(
                 "substancepainter.textures",
@@ -212,8 +300,13 @@ class SubstancePainterSessionCollector(HookBaseClass):
 
             textures_item.properties["path"] = export_path
             textures_item.properties["publish_type"] = "Surface Layerset"
+            textures_item.properties["textures"] = textures
+            textures_item.properties["selected_texture_stacks"] = list(root_paths)
+            textures_item.properties["carry_forward_previous_publish"] = (
+                carry_forward
+            )
 
-    def collect_textures(self, settings, parent_item, size_log2):
+    def collect_textures(self, settings, parent_item, size_log2, root_paths):
         publisher = self.parent
         engine = sgtk.platform.current_engine()
 
@@ -231,7 +324,7 @@ class SubstancePainterSessionCollector(HookBaseClass):
         try:
             try:
                 map_export_info = engine.substance.export_document_maps(
-                    export_path, size_log2
+                    export_path, size_log2, root_paths=root_paths
                 )
             finally:
                 engine.clear_busy()

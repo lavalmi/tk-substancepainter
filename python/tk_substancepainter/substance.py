@@ -176,7 +176,16 @@ class Substance:
     def get_map_export_information(self):
         raise NotImplementedError("This feature is currently not implemented.")
 
-    def export_document_maps(self, destination, size_log2):
+    def get_document_export_stacks(self):
+        """Return the export root paths for every stack in the open project."""
+
+        return [
+            str(stack)
+            for texture_set in sp.textureset.all_texture_sets()
+            for stack in texture_set.all_stacks()
+        ]
+
+    def export_document_maps(self, destination, size_log2, root_paths=None):
         self.log_debug("Starting map export...")
 
         shelf_name = self.engine.project_shelf_name
@@ -195,13 +204,21 @@ class Substance:
                 "project shelf '{}'.".format(shelf_name or "<not registered>")
             )
 
-        export_list = [
-            {"rootPath": str(stack)}
-            for texture_set in sp.textureset.all_texture_sets()
-            for stack in texture_set.all_stacks()
-        ]
+        available_root_paths = self.get_document_export_stacks()
+        if root_paths is None:
+            root_paths = available_root_paths
+        else:
+            unknown_root_paths = sorted(set(root_paths) - set(available_root_paths))
+            if unknown_root_paths:
+                raise RuntimeError(
+                    "Unknown texture stack(s): {}".format(
+                        ", ".join(unknown_root_paths)
+                    )
+                )
+
+        export_list = [{"rootPath": root_path} for root_path in root_paths]
         if not export_list:
-            raise RuntimeError("The project has no texture sets to export.")
+            raise RuntimeError("No texture sets were selected for export.")
 
         result = sp.export.export_project_textures(
             {
