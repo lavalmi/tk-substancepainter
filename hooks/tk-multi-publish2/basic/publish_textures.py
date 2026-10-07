@@ -10,6 +10,7 @@
 
 import os
 import pprint
+import shutil
 
 import sgtk
 from sgtk.util.filesystem import ensure_folder_exists
@@ -225,8 +226,7 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
 
         item.properties["export_path"] = export_path
 
-        textures = os.listdir(path)
-        textures = [os.path.join(path, texture) for texture in textures]
+        textures = item.properties.get("textures") or []
         textures = [texture for texture in textures if os.path.isfile(texture)]
         self.logger.debug("Files in current path: %s" % textures)
 
@@ -236,6 +236,35 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
             raise Exception(error_msg)
 
         item.properties["textures"] = textures
+
+        if item.properties.get("carry_forward_previous_publish"):
+            previous_publish = self._find_previous_publish(
+                item.context,
+                fields["name"],
+                item.properties["publish_type"],
+                fields["version"],
+            )
+            previous_publish_path = self._local_path_from_publish(previous_publish)
+            if not previous_publish_path or not os.path.isdir(
+                previous_publish_path
+            ):
+                error_msg = (
+                    "Cannot copy unchanged textures: no earlier valid texture "
+                    "publish folder was found for this asset, task and branch."
+                )
+                self.logger.error(error_msg)
+                raise Exception(error_msg)
+            if os.path.normcase(os.path.abspath(previous_publish_path)) == os.path.normcase(
+                os.path.abspath(export_path)
+            ):
+                raise Exception(
+                    "The previous texture publish resolves to the new publish path."
+                )
+
+            item.properties["previous_texture_publish"] = previous_publish
+            item.properties["previous_texture_publish_path"] = (
+                previous_publish_path
+            )
 
         return True
 
@@ -265,6 +294,22 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
         # make sure destination folder exists
         ensure_folder_exists(publish_path)
 
+        previous_publish_path = item.properties.get(
+            "previous_texture_publish_path"
+        )
+        if previous_publish_path:
+            copied = self._copy_previous_publish(
+                previous_publish_path, publish_path
+            )
+            self.logger.info(
+                "Carried forward %d unchanged file(s) from texture publish v%03d: %s"
+                % (
+                    copied,
+                    item.properties["previous_texture_publish"]["version_number"],
+                    previous_publish_path,
+                )
+            )
+
         textures = item.properties["textures"]
 
         for src in textures:
@@ -284,6 +329,8 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
                 "Added dependency: %s" % item.parent.properties.sg_publish_path
             )
             dependency_paths.append(item.parent.properties.sg_publish_path)
+        if previous_publish_path:
+            dependency_paths.append(previous_publish_path)
 
         self.logger.info("Registering publish...")
 
@@ -392,3 +439,61 @@ class SubstancePainterTexturesPublishPlugin(HookBaseClass):
                 % (publish_name, publish_type, ctx, e)
             )
         return sg_publishes
+
+    def _find_previous_publish(
+        self, ctx, publish_name, publish_type, current_version
+    ):
+        publish_entity_type = sgtk.util.get_published_file_entity_type(
+            self.parent.sgtk
+        )
+        if publish_entity_type == "PublishedFile":
+            publish_type_field = (
+                "published_file_type.PublishedFileType.code"
+            )
+        else:
+            publish_type_field = "tank_type.TankType.code"
+
+        filters = [
+            ["project", "is", ctx.project],
+            ["name", "is", publish_name],
+            [publish_type_field, "is", publish_type],
+            ["version_number", "less_than", current_version],
+        ]
+        if ctx.entity:
+            filters.append(["entity", "is", ctx.entity])
+        if ctx.task:
+            filters.append(["task", "is", ctx.task])
+
+        return self.parent.shotgun.find_one(
+            publish_entity_type,
+            filters,
+            ["path", "version_number"],
+            order=[{"field_name": "version_number", "direction": "desc"}],
+        )
+
+    def _local_path_from_publish(self, publish):
+        path = (publish or {}).get("path") or {}
+        if isinstance(path, str):
+            return path
+        for key in (
+            "local_path_windows",
+            "local_path",
+            "local_path_linux",
+            "local_path_mac",
+        ):
+            if path.get(key):
+                return path[key]
+
+    def _copy_previous_publish(self, source_dir, destination_dir):
+        copied = 0
+        for root, dirnames, filenames in os.walk(source_dir):
+            dirnames[:] = [name for name in dirnames if name != "_tx"]
+            relative_root = os.path.relpath(root, source_dir)
+            destination_root = os.path.join(destination_dir, relative_root)
+            ensure_folder_exists(destination_root)
+            for filename in filenames:
+                destination = os.path.join(destination_root, filename)
+                if not os.path.exists(destination):
+                    shutil.copy2(os.path.join(root, filename), destination)
+                    copied += 1
+        return copied
